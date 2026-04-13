@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Saba Banana Counter - YOLO Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#fdf6e3;--ivory:#f5ead0;--tan:#e8d5a3;--gold:#c8960c;--amber:#d4820a;
+  --brown:#5c3d11;--dark:#1e1206;--green:#3a7d44;--lgreen:#5a9e60;
+  --white:#fff;--sh:rgba(92,61,17,0.14);--r:14px;--tr:0.24s cubic-bezier(.4,0,.2,1)
+}
+
+/* ── BASE ── */
+html{-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;overflow-x:hidden}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(135deg,var(--brown),#3d2408,var(--dark));
+  padding:12px 16px;position:sticky;top:0;z-index:100;
+  box-shadow:0 3px 20px rgba(0,0,0,0.3);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--amber));border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.htxt{flex:1;min-width:0}
+.htxt h1{font-family:'Playfair Display',serif;font-size:clamp(0.8rem,3.5vw,1.15rem);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htxt p{font-size:0.65rem;color:var(--tan);margin-top:1px}
+.server-status{font-size:0.65rem;padding:4px 8px;border-radius:6px;display:flex;align-items:center;gap:4px;margin-left:auto}
+.server-status.connected{background:rgba(90,158,96,0.2);color:var(--green)}
+.server-status.disconnected{background:rgba(184,50,50,0.2);color:#b83232}
+nav{display:flex;gap:5px;flex-wrap:nowrap}
+.nb{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);color:var(--tan);padding:7px 10px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:600;transition:var(--tr);white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.nb:hover,.nb.active{background:var(--gold);border-color:var(--gold);color:var(--dark)}
+
+/* ── PAGES ── */
+.page{display:none;animation:fi .3s ease}.page.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+main{max-width:1200px;margin:0 auto;padding:16px 14px}
+
+/* ── HERO ── */
+.hero{border-radius:16px;padding:24px 20px;margin-bottom:20px;position:relative;overflow:hidden}
+.hero::after{content:'🍌';position:absolute;right:-8px;top:-8px;font-size:90px;opacity:0.1;transform:rotate(-18deg);pointer-events:none}
+.hero h2{font-family:'Playfair Display',serif;font-size:clamp(1.1rem,4vw,1.8rem);color:var(--cream);margin-bottom:5px}
+.hero p{color:rgba(253,246,227,0.76);font-size:clamp(0.78rem,2.5vw,0.88rem);line-height:1.55;max-width:480px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;margin-top:8px}
+.dot{width:6px;height:6px;border-radius:50%;animation:pulse 1.6s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* ── SECTION TITLE ── */
+.stitle{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--brown);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.stitle::after{content:'';flex:1;height:1.5px;background:linear-gradient(90deg,var(--tan),transparent)}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.rg{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.rt-layout{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:var(--r);border:1.5px solid var(--tan);overflow:hidden;box-shadow:0 2px 10px var(--sh)}
+.chd{background:linear-gradient(90deg,var(--ivory),var(--cream));padding:10px 14px;border-bottom:1.5px solid var(--tan);display:flex;align-items:center;gap:7px}
+.chd h3{font-family:'Playfair Display',serif;font-size:0.87rem;color:var(--brown)}
+.cbd{padding:14px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn:disabled{opacity:0.42;cursor:not-allowed!important;transform:none!important}
+.bg{background:linear-gradient(135deg,#32e664,#1aab47);color:#071a0d}
+.bg:not(:disabled):active{transform:scale(0.97)}
+.bam{background:linear-gradient(135deg,var(--amber),var(--gold));color:var(--dark)}
+.bam:not(:disabled):active{transform:scale(0.97)}
+.bbr{background:linear-gradient(135deg,var(--brown),#3d2408);color:var(--cream)}
+.bbr:not(:disabled):active{transform:scale(0.97)}
+.brd{background:transparent;border:1.5px solid #d9534f;color:#d9534f;padding:6px 11px;font-size:0.74rem}
+.brd:hover{background:#d9534f;color:#fff}
+.bol{background:transparent;border:1.5px solid var(--brown);color:var(--brown)}
+.bol:hover{background:var(--brown);color:var(--cream)}
+.bfull{width:100%;padding:13px;font-size:0.9rem;border-radius:11px;margin-top:12px}
+
+/* ── PREVIEW BOX ── */
+.pbox{background:#111;border-radius:9px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;border:2px solid var(--tan);overflow:hidden;position:relative;min-height:120px}
+.ph{text-align:center;color:#666;z-index:1}.phi{font-size:1.8rem;margin-bottom:5px}.ph p{font-size:0.75rem}
+.pbox img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:none}
+.uz{border:2.5px dashed var(--tan);border-radius:10px;padding:22px 14px;text-align:center;cursor:pointer;transition:var(--tr);background:var(--cream)}
+.uz:hover,.dov{border-color:var(--gold)!important;background:var(--ivory)!important}
+.brow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+
+/* ── RESULTS ── */
+#res-sec{margin-top:22px;display:none;animation:fi .4s ease}
+.sc{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.scard{background:linear-gradient(135deg,var(--ivory),var(--cream));border:1.5px solid var(--tan);border-radius:10px;padding:12px;text-align:center}
+.scard .v{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,4vw,1.8rem);font-weight:900;color:var(--brown);line-height:1}
+.scard .u{font-size:0.7rem;color:var(--amber);font-weight:600}
+.scard .l{font-size:0.67rem;color:#888;margin-top:2px}
+.cbw{grid-column:span 2}
+.cl{font-size:0.74rem;color:var(--brown);font-weight:600;margin-bottom:5px;display:flex;justify-content:space-between}
+.cb{height:9px;background:var(--tan);border-radius:5px;overflow:hidden}
+.cf{height:100%;background:linear-gradient(90deg,var(--green),var(--lgreen));border-radius:5px;width:0;transition:width .9s ease}
+.fbox{background:linear-gradient(135deg,var(--brown),#3d2408);border-radius:9px;padding:11px 13px;color:var(--cream);font-family:'DM Mono',monospace;font-size:0.73rem;grid-column:span 2;line-height:1.8}
+
+/* ── OVERLAY / TOAST ── */
+#lov{display:none;position:fixed;inset:0;background:rgba(30,18,6,0.78);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#lov.on{display:flex}
+.spin{width:44px;height:44px;border:4px solid rgba(253,246,227,0.18);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#lov p{color:var(--cream);font-size:0.84rem}
+#toast{position:fixed;bottom:16px;right:12px;left:12px;z-index:2000;background:var(--brown);color:var(--cream);padding:11px 16px;border-radius:10px;font-size:0.82rem;box-shadow:0 6px 22px rgba(0,0,0,0.26);transform:translateY(90px);opacity:0;transition:all .3s ease;pointer-events:none;text-align:center}
+#toast.on{transform:translateY(0);opacity:1}
+#toast.ok{background:var(--green)}
+#toast.er{background:#b83232}
+
+/* ── DASHBOARD ── */
+.dstat{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:20px}
+.ds{background:var(--white);border:1.5px solid var(--tan);border-radius:var(--r);padding:13px 11px;display:flex;align-items:center;gap:9px;box-shadow:0 2px 8px var(--sh)}
+.dsi{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
+.dsi.g{background:rgba(200,150,12,0.13)}.dsi.gr{background:rgba(58,125,68,0.13)}.dsi.b{background:rgba(92,61,17,0.1)}
+.dsv{font-family:'Playfair Display',serif;font-size:clamp(1.2rem,3vw,1.5rem);font-weight:900;color:var(--brown);line-height:1}
+.dsl{font-size:0.66rem;color:#888;margin-top:2px}
+.mc{background:var(--white);border:1.5px solid var(--tan);border-radius:var(--r);padding:16px;margin-bottom:18px}
+.mc h4{font-family:'Playfair Display',serif;font-size:0.9rem;color:var(--brown);margin-bottom:10px}
+.tw{overflow-x:auto;border-radius:10px;border:1.5px solid var(--tan);-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:0.78rem}
+thead{background:linear-gradient(90deg,var(--brown),#3d2408)}
+thead th{padding:9px 11px;text-align:left;color:var(--tan);font-weight:600;font-size:0.7rem;text-transform:uppercase;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--ivory);transition:var(--tr)}
+tbody tr:hover{background:var(--ivory)}
+tbody td{padding:8px 11px}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:0.68rem;font-weight:600}
+.bg2{background:rgba(58,125,68,0.13);color:var(--green)}
+.bad{background:rgba(200,150,12,0.13);color:var(--amber)}
+.ber{background:rgba(184,50,50,0.1);color:#b83232}
+.es{text-align:center;padding:32px;color:#aaa}
+.es .ei{font-size:2.2rem;margin-bottom:7px}
+
+/* ── LIVE CAMERA ── */
+.vid-wrap{position:relative;width:100%;background:#0a0a0a;border-radius:14px;overflow:hidden;border:2px solid var(--tan)}
+.vid-wrap::before{content:'';display:block;padding-bottom:75%}
+.vid-wrap video,.vid-wrap canvas,.vid-wrap .vmsg{position:absolute;inset:0;width:100%;height:100%}
+.vid-wrap video{object-fit:cover}
+.vid-wrap canvas{pointer-events:none}
+.vmsg{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;background:rgba(0,0,0,0.76);z-index:10}
+.vmsg.hide{display:none}
+.vsbar{position:absolute;top:0;left:0;right:0;z-index:20;background:rgba(0,0,0,0.62);padding:6px 11px;display:flex;align-items:center;gap:7px}
+.vdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.vstxt{font-size:0.7rem;color:var(--cream);font-weight:600;font-family:'DM Mono',monospace;letter-spacing:.05em}
+.vfps{position:absolute;bottom:6px;right:8px;z-index:20;background:rgba(0,0,0,0.58);color:#999;font-size:0.65rem;font-family:'DM Mono',monospace;padding:2px 5px;border-radius:4px}
+.vcontrols{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.vcontrols .btn{flex:1;min-width:0;padding:11px 8px;font-size:0.85rem}
+.rtm{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rmet{background:var(--white);border:1.5px solid var(--tan);border-radius:10px;padding:13px 10px;text-align:center}
+.rmv{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2rem);font-weight:900;color:var(--brown);line-height:1;transition:color .22s}
+.rmv.pop{color:var(--green)}
+.rmu{font-size:0.7rem;color:var(--amber);font-weight:600;margin-top:2px}
+.rml{font-size:0.65rem;color:#999;margin-top:1px}
+.s2{grid-column:span 2}
+.rtinfo{background:linear-gradient(135deg,var(--brown),#3d2408);border-radius:10px;padding:10px 13px;color:var(--cream);font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.85}
+.snrow{display:flex;gap:5px;overflow-x:auto;padding:3px 0;min-height:46px;align-items:center;-webkit-overflow-scrolling:touch}
+.snth{width:56px;height:42px;border-radius:6px;object-fit:cover;border:2px solid var(--tan);cursor:pointer;flex-shrink:0;transition:var(--tr)}
+.snth:hover{border-color:var(--gold)}
+
+/* ══════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════ */
+
+/* ── TABLET: 601–1024px ── */
+@media(min-width:601px){
+  main{padding:20px 18px}
+  header{padding:13px 22px}
+  .htxt p{display:block}
+  .hero{padding:28px 26px}
+  .hero::after{font-size:110px}
+  .server-status{display:flex}
+  #toast{left:auto;max-width:280px;text-align:left}
+}
+
+/* ── DESKTOP: 1025px+ ── */
+@media(min-width:1025px){
+  main{padding:28px 24px}
+  header{padding:14px 32px}
+  .logo{width:42px;height:42px;font-size:20px}
+  .nb{padding:7px 14px;font-size:0.8rem}
+  .hero{padding:36px 32px;border-radius:20px;margin-bottom:26px}
+  .hero::after{font-size:130px}
+  .hero p{font-size:0.9rem}
+  .g2{gap:20px;margin-bottom:22px}
+  .rg{gap:20px}
+  .rt-layout{gap:20px}
+  .cbd{padding:18px}
+  .card{border-radius:16px}
+  .btn{padding:9px 16px}
+  .bfull{padding:14px;font-size:0.92rem}
+  .server-status{display:flex}
+}
+
+/* ── MOBILE: max 600px ── */
+@media(max-width:600px){
+  header{padding:10px 12px;gap:8px}
+  .logo{width:34px;height:34px;font-size:16px;border-radius:9px}
+  .htxt h1{font-size:0.82rem}
+  .htxt p{display:none}
+  .server-status{display:none}
+  .nb{padding:6px 9px;font-size:0.72rem}
+  main{padding:12px 10px}
+  .hero{padding:18px 16px;border-radius:14px;margin-bottom:16px}
+  .hero::after{font-size:70px}
+  .hero h2{font-size:1.1rem}
+  .hero p{font-size:0.78rem;max-width:100%}
+  .g2,.rg,.rt-layout{grid-template-columns:1fr;gap:12px}
+  .cbd{padding:12px}
+  .chd{padding:10px 12px}
+  .btn{padding:10px 12px;font-size:0.84rem;border-radius:9px}
+  .bfull{padding:14px;font-size:0.9rem;margin-top:10px}
+  .vcontrols .btn{padding:13px 8px;font-size:0.88rem}
+  .dstat{grid-template-columns:1fr 1fr;gap:9px}
+  .dsv{font-size:1.3rem}
+  .dsl{font-size:0.63rem}
+  .dsi{width:34px;height:34px;font-size:1rem}
+  .ds{padding:11px 9px;gap:8px}
+  .scard .v{font-size:1.5rem}
+  thead th:nth-child(4),tbody td:nth-child(4),thead th:nth-child(5),tbody td:nth-child(5){display:none}
+  tbody td{padding:8px 8px;font-size:0.76rem}
+  thead th{padding:8px 8px;font-size:0.68rem}
+  .rmv{font-size:1.8rem}
+  .rmet{padding:12px 8px}
+  .stitle{font-size:0.98rem}
+  #toast{bottom:12px;right:10px;left:10px;font-size:0.8rem;padding:10px 14px}
+  .snth{width:50px;height:38px}
+}
+
+@media(max-width:380px){
+  .nb{padding:5px 7px;font-size:0.68rem}
+  .htxt h1{font-size:0.75rem}
+  .hero h2{font-size:1rem}
+  .dstat{grid-template-columns:1fr 1fr}
+  .dsv{font-size:1.15rem}
+  .rmv{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+<div id="lov"><div class="spin"></div><p id="lov-text">Analyzing…</p></div>
+<div id="toast"></div>
+
+<header>
+  <div class="logo">🍌</div>
+  <div class="htxt">
+    <h1>Saba Banana Counter</h1>
+    <p>YOLO AI · Real-time Detection</p>
+  </div>
+  <div class="server-status" id="server-status">
+    <span class="dot" id="status-dot" style="background:#b83232"></span>
+    <span id="status-text">Offline</span>
+  </div>
+  <nav>
+    <button class="nb active" onclick="goPage('analyze',this)">📷 Analyze</button>
+    <button class="nb" onclick="goPage('live',this)">🔴 Live</button>
+    <button class="nb" onclick="goPage('dashboard',this)">📊 Dashboard</button>
+  </nav>
+</header>
+
+<!-- ══ ANALYZE ══ -->
+<div id="page-analyze" class="page active">
+<main>
+  <div class="hero" style="background:linear-gradient(135deg,#3a7d44,#2d6234,#1e4a26)">
+    <h2>Banana Bunch Analyzer</h2>
+    <p>Mag-upload o kumuha ng litrato ng Saba banana bunch para sa YOLO-powered detection ng banana counts at weight estimation.</p>
+    <div class="pill" style="background:rgba(58,125,68,0.3);color:#a8e6b0">
+      <span class="dot" style="background:#5a9e60"></span>AI-Powered · Python Backend
+    </div>
+  </div>
+  <h3 class="stitle">📷 Image Input</h3>
+  <div class="g2">
+    <div class="card">
+      <div class="chd"><span>📸</span><h3>Kumuha ng Litrato</h3></div>
+      <div class="cbd">
+        <div class="pbox" id="cam-box">
+          <div class="ph" id="cam-ph"><div class="phi">📷</div><p>Wala pang litrato</p></div>
+          <img id="cam-prev" alt=""/>
+        </div>
+        <input type="file" id="cam-inp" accept="image/*" capture="environment" style="display:none" onchange="loadImg(event,'cam')">
+        <div class="brow">
+          <button class="btn bam" style="width:100%;justify-content:center" onclick="document.getElementById('cam-inp').click()">📷 Kumuha ng Litrato</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chd"><span>📂</span><h3>Mag-upload</h3></div>
+      <div class="cbd">
+        <div class="uz" id="uz" onclick="document.getElementById('up-inp').click()"
+          ondragover="event.preventDefault();this.classList.add('dov')"
+          ondragleave="this.classList.remove('dov')"
+          ondrop="dropFile(event)">
+          <div style="font-size:2.2rem;margin-bottom:6px">🗂️</div>
+          <p style="font-size:0.82rem;color:#888"><strong>I-click</strong> o i-drag & drop</p>
+          <p style="font-size:0.73rem;color:#aaa;margin-top:3px">JPG, PNG</p>
+        </div>
+        <input type="file" id="up-inp" accept="image/jpeg,image/png" style="display:none" onchange="loadImg(event,'upload')">
+        <div class="pbox" id="up-box" style="margin-top:10px;display:none">
+          <img id="up-prev" alt="" style="display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
+        </div>
+        <div id="up-name" style="font-size:0.74rem;color:#888;margin-top:5px;display:none"></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn bbr bfull" id="btn-analyze" onclick="runAnalyze()" disabled>🔍 I-analyze ang Litrato</button>
+  <div id="res-sec">
+    <h3 class="stitle" style="margin-top:28px">📊 Results</h3>
+    <div class="rg">
+      <div class="card">
+        <div class="chd"><span>🖼️</span><h3>Processed Image</h3><span id="res-date" style="margin-left:auto;font-size:0.68rem;color:#aaa"></span></div>
+        <div class="cbd" style="padding:11px">
+          <img id="res-img" style="width:100%;display:block;border-radius:8px;max-height:400px;object-fit:contain"/>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chd"><span>📈</span><h3>Summary</h3></div>
+        <div class="cbd">
+          <div class="sc">
+            <div class="scard"><div class="v" id="r-pieces">—</div><div class="u">pieces</div><div class="l">Total</div></div>
+            <div class="scard"><div class="v" id="r-weight">—</div><div class="u">kg</div><div class="l">Est. Weight</div></div>
+            <div class="cbw">
+              <div class="cl"><span>Confidence</span><span id="r-conf-pct">0%</span></div>
+              <div class="cb"><div class="cf" id="r-cf"></div></div>
+            </div>
+            <div class="fbox">Weight = Total Pieces × 2.5 kg<br><span id="r-formula" style="color:var(--gold)">— × 2.5 = — kg</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ══ LIVE ══ -->
+<div id="page-live" class="page">
+<main>
+  <div class="hero" style="background:linear-gradient(135deg,#0d1117,#1a1f2e,#0d2040)">
+    <h2>🔴 Live Detection</h2>
+    <p>Real-time banana detection using YOLO. Point your camera at banana bunches for live counting.</p>
+    <div class="pill" style="background:rgba(50,230,100,0.15);color:#80ffaa">
+      <span class="dot" id="live-pdot" style="background:#32e664"></span>
+      <span id="live-ptxt">Ready</span>
+    </div>
+  </div>
+
+  <div class="rt-layout">
+    <div>
+      <div class="vid-wrap">
+        <video id="live-vid" autoplay playsinline muted></video>
+        <canvas id="live-cvs"></canvas>
+        <div class="vsbar">
+          <div class="vdot" id="vdot" style="background:#555"></div>
+          <span class="vstxt" id="vstxt">OFFLINE</span>
+        </div>
+        <div class="vfps" id="vfps">— fps</div>
+        <div class="vmsg" id="vmsg">
+          <div style="font-size:3.5rem;margin-bottom:12px">🍌</div>
+          <div style="color:#fff;font-weight:700;font-size:1.05rem;margin-bottom:6px">I-tap ang ▶ Start</div>
+          <div style="color:#aaa;font-size:0.8rem">Bubuksan ang camera at magsisimulang mag-detect</div>
+        </div>
+      </div>
+      <div class="vcontrols">
+        <button class="btn bg" id="btn-start" onclick="liveStart()" style="flex:1;justify-content:center;padding:12px;font-size:0.95rem">▶ Start</button>
+        <button class="btn" id="btn-stop" onclick="liveStop()" disabled style="background:#c62828;color:#fff;padding:12px 16px">■ Stop</button>
+        <button class="btn bam" id="btn-snap" onclick="liveSnap()" disabled>📸 Save</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="stitle">📊 Live Results</h3>
+      <div class="rtm">
+        <div class="rmet"><div class="rmv" id="lv-pieces">—</div><div class="rmu">pieces</div><div class="rml">Total</div></div>
+        <div class="rmet"><div class="rmv" id="lv-weight">—</div><div class="rmu">kg</div><div class="rml">Est. Weight</div></div>
+        <div class="s2" style="background:var(--white);border:1.5px solid var(--tan);border-radius:10px;padding:12px 15px">
+          <div class="cl"><span>Confidence</span><span id="lv-conf-pct">—</span></div>
+          <div class="cb"><div class="cf" id="lv-cf" style="width:0%"></div></div>
+        </div>
+        <div class="s2 rtinfo">
+          <span style="color:var(--gold)">📡 Live Mode</span><br>
+          Frames: <span id="lv-count" style="color:#32e664">0</span><br>
+          Updated: <span id="lv-updated" style="color:#aaa">—</span><br>
+          Speed: <span id="lv-speed" style="color:#aaa">500ms</span>
+        </div>
+        <div class="s2">
+          <label style="font-size:0.78rem;color:var(--brown);font-weight:600;display:block;margin-bottom:5px">⚡ Detection Speed</label>
+          <input type="range" min="100" max="1000" step="50" value="300" style="width:100%;accent-color:var(--amber)" oninput="setSpeed(+this.value)">
+          <div style="display:flex;justify-content:space-between;font-size:0.69rem;color:#aaa;margin-top:2px"><span>⚡ Faster</span><span>🐢 Slower</span></div>
+        </div>
+        <div class="s2">
+          <div style="font-family:'Playfair Display',serif;font-size:0.86rem;color:var(--brown);margin-bottom:6px">📸 Snapshots</div>
+          <div class="snrow" id="sn-row"><span style="font-size:0.74rem;color:#bbb">Wala pang snapshot</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="page-dashboard" class="page">
+<main>
+  <div class="hero" style="background:linear-gradient(135deg,#3d2408,#5c3d11,#7a5220)">
+    <h2>Dashboard</h2>
+    <p>All detection results saved locally in your browser.</p>
+  </div>
+  <h3 class="stitle">📊 Overview</h3>
+  <div class="dstat">
+    <div class="ds"><div class="dsi g">📊</div><div><div class="dsv" id="d-tot">0</div><div class="dsl">Total Analyses</div></div></div>
+    <div class="ds"><div class="dsi b">🍌</div><div><div class="dsv" id="d-avgp">0</div><div class="dsl">Avg Pieces</div></div></div>
+    <div class="ds"><div class="dsi g">⚖️</div><div><div class="dsv" id="d-avgw">0</div><div class="dsl">Avg Weight (kg)</div></div></div>
+    <div class="ds"><div class="dsi gr">🏆</div><div><div class="dsv" id="d-maxp">0</div><div class="dsl">Max Pieces</div></div></div>
+    <div class="ds"><div class="dsi b">💰</div><div><div class="dsv" id="d-maxw">0</div><div class="dsl">Max Weight (kg)</div></div></div>
+  </div>
+  <div class="mc"><h4>📈 Recent Detections</h4><canvas id="chart" height="80"></canvas></div>
+  <h3 class="stitle">🗂️ History</h3>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px">
+    <button class="btn bol" onclick="loadDash()" style="padding:5px 12px;font-size:0.77rem">🔄 Refresh</button>
+    <button class="btn brd" onclick="clearAll()">🗑 Clear All</button>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Pieces</th><th>Weight</th><th>Confidence</th><th>Date</th><th></th></tr></thead>
+      <tbody id="db-tbody"></tbody>
+    </table>
+  </div>
+</main>
+</div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    CONFIGURATION & SETUP                                        ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+// Use relative URLs so it works on any server
+const API_URL = window.location.origin;  // Works on localhost or any deployed URL
+const AVG_KG = 2.5;
+const DB_KEY = 'banana_v4';
+
+let serverConnected = false;
+let curImg = null;
+let liveActive = false;
+let liveSpeed = 500;
+let frameCount = 0;
+let snapshots = [];
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    SERVER STATUS CHECK                                          ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+async function checkServerStatus() {
+  try {
+    const res = await fetch(`${API_URL}/health`, { method: 'GET' });
+    if (res.ok) {
+      serverConnected = true;
+      updateStatusUI(true);
+      console.log('✓ Connected to backend');
+      return true;
+    }
+  } catch (e) {
+    serverConnected = false;
+    updateStatusUI(false);
+  }
+  return false;
+}
+
+function updateStatusUI(connected) {
+  const status = document.getElementById('server-status');
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  
+  if (connected) {
+    dot.style.background = '#5a9e60';
+    text.textContent = 'Connected';
+    status.className = 'server-status connected';
+  } else {
+    dot.style.background = '#b83232';
+    text.textContent = 'Offline';
+    status.className = 'server-status disconnected';
+  }
+}
+
+// Check server on load
+window.addEventListener('load', () => {
+  checkServerStatus();
+  setInterval(checkServerStatus, 5000);  // Check every 5 seconds
+  loadDash();
+});
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    NAVIGATION & UI                                              ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+function goPage(n, b) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(x => x.classList.remove('active'));
+  document.getElementById('page-' + n).classList.add('active');
+  b.classList.add('active');
+  if (n === 'dashboard') loadDash();
+}
+
+let _tt;
+function toast(m, t = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = m;
+  el.className = 'on ' + t;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.className = '', 2800);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    LOCAL STORAGE (DATABASE)                                     ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+function dbLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function dbSave(a) {
+  localStorage.setItem(DB_KEY, JSON.stringify(a));
+}
+
+function dbInsert(r) {
+  const a = dbLoad();
+  r.id = Date.now();
+  r.timestamp = new Date().toISOString();
+  a.unshift(r);
+  dbSave(a);
+}
+
+function dbDelete(id) {
+  dbSave(dbLoad().filter(r => r.id !== id));
+}
+
+function dbClear() {
+  localStorage.removeItem(DB_KEY);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    IMAGE LOADING (ANALYZE PAGE)                                 ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+function loadImg(ev, src) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  
+  const rd = new FileReader();
+  rd.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      curImg = img;
+      if (src === 'cam') {
+        const p = document.getElementById('cam-prev');
+        p.src = e.target.result;
+        p.style.display = 'block';
+        document.getElementById('cam-ph').style.display = 'none';
+      } else {
+        document.getElementById('up-box').style.display = 'block';
+        document.getElementById('up-prev').src = e.target.result;
+        const fn = document.getElementById('up-name');
+        fn.textContent = '📄 ' + file.name;
+        fn.style.display = 'block';
+      }
+      document.getElementById('btn-analyze').disabled = false;
+      toast('📂 Ready: ' + file.name);
+    };
+    img.src = e.target.result;
+  };
+  rd.readAsDataURL(file);
+  ev.target.value = '';
+}
+
+function dropFile(e) {
+  e.preventDefault();
+  document.getElementById('uz').classList.remove('dov');
+  const f = e.dataTransfer.files[0];
+  if (f) loadFile({ target: { files: [f] } }, 'upload');
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    BACKEND DETECTION (ANALYZE)                                  ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+async function runAnalyze() {
+  if (!serverConnected) {
+    toast('⚠️ Backend offline. Cannot analyze.', 'er');
+    return;
+  }
+
+  if (!curImg) {
+    toast('📂 No image selected', 'er');
+    return;
+  }
+
+  // Load overlay
+  document.getElementById('lov').classList.add('on');
+  document.getElementById('lov-text').textContent = 'Sending to YOLO...';
+
+  try {
+    // Convert image to base64
+    const canvas = document.getElementById('hc') || document.createElement('canvas');
+    canvas.width = curImg.naturalWidth;
+    canvas.height = curImg.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(curImg, 0, 0);
+    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+    // Send to backend
+    document.getElementById('lov-text').textContent = 'Processing...';
+    const res = await fetch(`${API_URL}/detect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64 })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Detection failed');
+    }
+
+    // Display results
+    displayResults(data);
+    
+    // Save to database
+    dbInsert({
+      pieces: data.count,
+      weight: data.estimated_weight,
+      confidence: data.avg_confidence
+    });
+
+    toast('✓ Analysis complete!', 'ok');
+  } catch (err) {
+    console.error('Analysis error:', err);
+    toast('⚠️ ' + err.message, 'er');
+  } finally {
+    document.getElementById('lov').classList.remove('on');
+  }
+}
+
+function displayResults(data) {
+  // Show results section
+  document.getElementById('res-sec').style.display = 'block';
+
+  // Display output image
+  const resImg = document.getElementById('res-img');
+  resImg.src = 'data:image/jpeg;base64,' + data.output_image;
+
+  // Update stats
+  const pieces = data.count;
+  const weight = data.estimated_weight.toFixed(1);
+  const confidence = (data.avg_confidence * 100).toFixed(1);
+
+  document.getElementById('r-pieces').textContent = pieces;
+  document.getElementById('r-weight').textContent = weight;
+  document.getElementById('r-conf-pct').textContent = confidence + '%';
+  document.getElementById('r-formula').textContent = `${pieces} × 2.5 = ${weight} kg`;
+  
+  // Update confidence bar
+  const cf = document.getElementById('r-cf');
+  cf.style.width = (data.avg_confidence * 100) + '%';
+
+  // Update date
+  const now = new Date();
+  document.getElementById('res-date').textContent = now.toLocaleTimeString();
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    LIVE CAMERA DETECTION                                        ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+async function liveStart() {
+  if (!serverConnected) {
+    toast('⚠️ Backend offline', 'er');
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false
+    });
+
+    const video = document.getElementById('live-vid');
+    video.srcObject = stream;
+
+    // Hide message, show controls
+    document.getElementById('vmsg').classList.add('hide');
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-stop').disabled = false;
+    document.getElementById('btn-snap').disabled = false;
+
+    // Update status pill
+    document.getElementById('live-pdot').style.background = '#32e664';
+    document.getElementById('live-ptxt').textContent = 'Recording...';
+    document.getElementById('vstxt').textContent = 'LIVE';
+    document.getElementById('vdot').style.background = '#32e664';
+
+    liveActive = true;
+    frameCount = 0;
+
+    // Start detection loop
+    liveDetectLoop();
+
+    toast('🎥 Live stream started', 'ok');
+  } catch (err) {
+    console.error('Camera error:', err);
+    toast('⚠️ Camera access denied', 'er');
+  }
+}
+
+function liveStop() {
+  const video = document.getElementById('live-vid');
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+  }
+
+  liveActive = false;
+  
+  document.getElementById('vmsg').classList.remove('hide');
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-snap').disabled = true;
+  document.getElementById('live-pdot').style.background = '#555';
+  document.getElementById('live-ptxt').textContent = 'Ready';
+  document.getElementById('vstxt').textContent = 'OFFLINE';
+  document.getElementById('vdot').style.background = '#555';
+
+  toast('⏹ Stream stopped', 'ok');
+}
+
+async function liveDetectLoop() {
+  if (!liveActive) return;
+
+  try {
+    const video = document.getElementById('live-vid');
+    const canvas = document.getElementById('live-cvs');
+    const ctx = canvas.getContext('2d');
+
+    // Setup canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame
+    ctx.drawImage(video, 0, 0);
+
+    // Get base64
+    const base64 = canvas.toDataURL('image/jpeg', 0.75);
+
+    // Send to backend
+    const res = await fetch(`${API_URL}/detect-stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64 })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      updateLiveDisplay(data);
+
+      // Draw boxes
+      ctx.strokeStyle = '#00FF00';
+      ctx.lineWidth = 2;
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#00FF00';
+
+      for (const det of data.detections) {
+        const x1 = det.x1, y1 = det.y1, x2 = det.x2, y2 = det.y2;
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.fillText(det.conf.toFixed(2), x1, y1 - 5);
+      }
+
+      frameCount++;
+    }
+  } catch (err) {
+    console.error('Live detection error:', err);
+  }
+
+  setTimeout(liveDetectLoop, liveSpeed);
+}
+
+function updateLiveDisplay(data) {
+  const pieces = data.count;
+  const weight = data.estimated_weight.toFixed(1);
+  const confidence = (data.avg_confidence * 100).toFixed(1);
+
+  document.getElementById('lv-pieces').textContent = pieces;
+  document.getElementById('lv-weight').textContent = weight;
+  document.getElementById('lv-conf-pct').textContent = confidence + '%';
+  document.getElementById('lv-count').textContent = frameCount;
+
+  const cf = document.getElementById('lv-cf');
+  cf.style.width = data.avg_confidence * 100 + '%';
+
+  document.getElementById('lv-updated').textContent = new Date().toLocaleTimeString();
+  document.getElementById('vfps').textContent = Math.round(1000 / liveSpeed) + ' fps';
+}
+
+function liveSnap() {
+  const canvas = document.getElementById('live-cvs');
+  snapshots.push(canvas.toDataURL('image/jpeg'));
+
+  const snrow = document.getElementById('sn-row');
+  if (snrow.firstChild.tagName !== 'IMG') {
+    snrow.innerHTML = '';
+  }
+
+  const img = document.createElement('img');
+  img.src = snapshots[snapshots.length - 1];
+  img.className = 'snth';
+  snrow.appendChild(img);
+
+  toast('📸 Snapshot saved', 'ok');
+}
+
+function setSpeed(v) {
+  liveSpeed = v;
+  document.getElementById('lv-speed').textContent = v + 'ms';
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════
+// ██                    DASHBOARD                                                    ██
+// ════════════════════════════════════════════════════════════════════════════════════
+
+function loadDash() {
+  const data = dbLoad();
+
+  if (!data.length) {
+    document.getElementById('d-tot').textContent = '0';
+    document.getElementById('d-avgp').textContent = '0';
+    document.getElementById('d-avgw').textContent = '0';
+    document.getElementById('d-maxp').textContent = '0';
+    document.getElementById('d-maxw').textContent = '0';
+    document.getElementById('db-tbody').innerHTML = '<tr><td colspan="5" class="es">No data yet</td></tr>';
+    if (window.dashChart) window.dashChart.destroy();
+    return;
+  }
+
+  // Stats
+  const tot = data.length;
+  const avgp = (data.reduce((s, r) => s + r.pieces, 0) / tot).toFixed(1);
+  const avgw = (data.reduce((s, r) => s + r.weight, 0) / tot).toFixed(1);
+  const maxp = Math.max(...data.map(r => r.pieces));
+  const maxw = Math.max(...data.map(r => r.weight)).toFixed(1);
+
+  document.getElementById('d-tot').textContent = tot;
+  document.getElementById('d-avgp').textContent = avgp;
+  document.getElementById('d-avgw').textContent = avgw;
+  document.getElementById('d-maxp').textContent = maxp;
+  document.getElementById('d-maxw').textContent = maxw;
+
+  // Table
+  const tbl = document.getElementById('db-tbody');
+  tbl.innerHTML = data.slice(0, 20).map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${r.pieces}</td>
+      <td>${r.weight.toFixed(1)} kg</td>
+      <td><span class="badge bad">${(r.confidence * 100).toFixed(0)}%</span></td>
+      <td style="font-size:0.7rem;color:#999">${new Date(r.timestamp).toLocaleString()}</td>
+      <td><button class="btn brd" style="padding:3px 8px;font-size:0.7rem" onclick="dbDelete(${r.id});loadDash()">✕</button></td>
+    </tr>
+  `).join('');
+
+  // Chart
+  drawChart(data.slice(0, 20));
+}
+
+function drawChart(data) {
+  const canvas = document.getElementById('chart');
+  if (!canvas) return;
+
+  if (window.dashChart) window.dashChart.destroy();
+
+  window.dashChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.map((_, i) => i + 1).reverse(),
+      datasets: [
+        {
+          label: 'Pieces',
+          data: data.map(r => r.pieces || r.hands || 1).reverse(),
+          borderColor: '#5a9e60',
+          backgroundColor: 'rgba(90,158,96,0.1)',
+          tension: 0.4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Weight (kg)',
+          data: data.map(r => r.weight).reverse(),
+          borderColor: '#d4820a',
+          backgroundColor: 'rgba(212,130,10,0.1)',
+          tension: 0.4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true, position: 'top' } },
+      scales: {
+        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#5a9e60' } },
+        y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#d4820a' }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function clearAll() {
+  if (confirm('🗑 Clear all data? This cannot be undone.')) {
+    dbClear();
+    loadDash();
+    toast('✓ All data cleared', 'ok');
+  }
+}
+</script>
+</body>
+</html>
